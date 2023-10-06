@@ -13,6 +13,8 @@ import { Route, Routes, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import api from './api/post'
+import useWindowSize from './hooks/useWindowSize';
+import useAxiosFetch from './hooks/useAxiosFetch';
 
 function App () {
   const [posts, setPosts] = useState([])
@@ -23,9 +25,10 @@ function App () {
   const [search, setSearch] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const navigate = useNavigate()
-  const handleNavigate = url => {
-    navigate(url)
-  }
+  const handleNavigate = url => {navigate(url)}
+
+  const { width } = useWindowSize();
+  const { data, fetchError, isLoading } = useAxiosFetch('http://localhost:3500/posts');
 
   const handleSubmit = async e => {
     e.preventDefault()
@@ -80,36 +83,44 @@ function App () {
     setSearchResults(filteredResults.reverse())
   }, [posts, search])
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const response = await api.get('/posts')
+  useEffect(()=>{
+    console.log(data)
+    setPosts(data);
+  }, [data])
 
-        if (response && response.data) {
-          setPosts(response.data)
-          console.log(response.data)
-        }
-      } catch (err) {
-        if (err.response) {
-          // Not in the 200 response range
-          console.log(err.response.data)
-          console.log(err.response.status)
-          console.log(err.response.headers)
-        } else {
-          console.log(`Error: ${err.message}`)
-        }
-      }
-    }
-    fetchPost()
-  }, [])
+  // useEffect(() => {
+  //   const fetchPost = async () => {
+  //     try {
+  //       const response = await api.get('/posts')
+
+  //       if (response && response.data) {
+  //         setPosts(response.data)
+  //       }
+  //     } catch (err) {
+  //       if (err.response) {
+  //         // Not in the 200 response range
+  //         console.log(err.response.data)
+  //         console.log(err.response.status)
+  //         console.log(err.response.headers)
+  //       } else {
+  //         console.log(`Error: ${err.message}`)
+  //       }
+  //     }
+  //   }
+  //   fetchPost()
+  // }, [])
 
   return (
     <div className='App'>
-      <Header title='React Js Blog' />
+      <Header title='React Js Blog' width={width} />
       <Nav search={search} setSearch={setSearch} />
 
       <Routes>
-        <Route exact path='/' element={<Home posts={searchResults} />} />
+        <Route exact path='/' element={<Home 
+          posts={searchResults} 
+          fetchError={fetchError}
+          isLoading={isLoading}
+          />} />
         <Route
           path='post'
           element={
